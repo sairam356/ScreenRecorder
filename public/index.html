@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Screen Recorder</title>
+</head>
+<body>
+  <h2>Screen Recorder</h2>
+  <button id="openAndRecord">Open Website & Start Recording</button>
+  <button id="stop">Stop Recording</button>
+
+  <script>
+    let mediaRecorder;
+    let recordedChunks = [];
+
+    document.getElementById('openAndRecord').onclick = async () => {
+      window.open("https://example.com", "_blank");
+
+      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+      recordedChunks = [];
+
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) recordedChunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const formData = new FormData();
+        formData.append('video', blob, 'recording.webm');
+
+        await fetch('/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        alert("🎉 Recording uploaded successfully!");
+      };
+
+      mediaRecorder.start();
+      alert("🔴 Recording started... switch to the other tab!");
+    };
+
+    document.getElementById('stop').onclick = () => {
+      mediaRecorder?.stop();
+    };
+  </script>
+</body>
+</html>
